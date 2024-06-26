@@ -54,7 +54,8 @@ def degree_matrix(a:np.ndarray) -> np.ndarray:
     if len(a.shape) != 2:
         assert "not 2 dimentional matrix"
 
-    diag_list = [len(*np.nonzero(i)) for i in a]
+    # diag_list = [len(*np.nonzero(i)) for i in a]
+    diag_list = [np.sum(i) for i in a]
     return np.diag(diag_list)
 
 
