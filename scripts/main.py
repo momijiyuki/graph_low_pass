@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
+from scipy import sparse
 
 from pygsp import graphs
 
@@ -61,25 +62,33 @@ def degree_matrix(a:np.ndarray) -> np.ndarray:
 
 def main():
     # traindata, *_ = load_mnist.mnist(dtype=np.int16)
-    traindata, _ = load_mnist.digits()
-    # traindata = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9]])
+    # traindata, _ = load_mnist.digits()
+    traindata = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9]])
     A = adjacemcy_matrix(traindata[0])
     D = degree_matrix(A)
     L = D - A
     eigen_val, eigen_vec = np.linalg.eig(L)
-    print(eigen_val)
+    eigen_vec = eigen_vec[:, np.argsort(eigen_val)]
+    eigen_val = sorted(eigen_val.round(8))
+    # hval, hvec = np.linalg.eigh(L)
+    hval, hvec = sparse.linalg.eigsh(sparse.csc_matrix(L), k=2, tol=5e-3)
+    print(hval)
     return
+    print(eigen_vec-hvec[:, np.argsort(hval)])
+
     g = graphs.Graph(A)
+    print(g.D, D)
+    return
     g.compute_fourier_basis()
     gft_sig = g.gft(traindata[0])
-
+    print(g.e-eigen_val)
 
     fig, ax = plt.subplots()
     ax.stem(eigen_val, gft_sig, linefmt="--", basefmt="k-", label="correct")
 
 
     # plt.imshow(g.igft(gft_sig).reshape(int(np.sqrt(traindata[0].shape[0])), -1), cmap="gray")
-    plt.show()
+    # plt.show()
     # print(gft_sig)
     # print(gft_sig.shape)
     # graphs.Graph.gft(g)
