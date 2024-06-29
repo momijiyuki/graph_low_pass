@@ -159,8 +159,9 @@ GraphFourier
     - coherence: 類似度や一貫性といった意図？
 - compute_fourier_basis(self, recompute=False):
   - `self._e, self._U = np.linalg.eigh(self.L.toarray())`
-    - _e[0] = 0
+    - _e[0] = 0 最小の固有値の要素を0
     - self.Lとは
+    - self._lmax を最大の固有値に更新
   - self._mu = np.max(np.abs(self._U))
 - gft(self, s):
     ```py
