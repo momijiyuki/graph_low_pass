@@ -112,7 +112,7 @@ def main():
     plt.show()
 
     for i in range(10, 50, 10):
-        y = graph_filter(traindata[1], i, funch, L, lmax)
+        y = graph_filter(traindata[1], i, funch, L, eig_vals[-1])
 
         plt.imshow(y.reshape(int(np.sqrt(traindata[1].shape[0])), -1), cmap="gray")
         plt.show()
