@@ -105,8 +105,8 @@ def main():
     A = adjacemcy_matrix(traindata[1])
     D = degree_matrix(A)
     L = D - A
-    lmax = np.linalg.eigvalsh(L)[-1]
-    print(lmax)
+    eig_vals = np.linalg.eigvalsh(L)
+    print(f"lambda max: {eig_vals[-1]}")
 
     plt.imshow(traindata[1].reshape(int(np.sqrt(traindata[1].shape[0])), -1), cmap="gray")
     plt.show()
