@@ -27,7 +27,7 @@ def compute_cl(k, l, lambda_max, func_h):
     cl = 0
     for p in range(1, k_s):
         theta_p = (np.pi *(p - 0.5)) / k_s
-        cl += np.cos(l*theta_p)* func_h(lambda_max/2 * (theta_p+1))
+        cl += np.cos(l*theta_p)* func_h(lambda_max/2 * (np.cos(theta_p)+1))
     return cl
 
 
@@ -60,16 +60,11 @@ def degree_matrix(a:np.ndarray) -> np.ndarray:
     return np.diag(diag_list)
 
 
-def main():
+def filter_graph_domain():
     traindata, *_ = load_mnist.mnist(dtype=np.int16)
     # traindata, _ = load_mnist.digits()
     # traindata = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9]])
     A = adjacemcy_matrix(traindata[0])
-    # D = degree_matrix(A)
-    # L = D - A
-    # eigen_val, eigen_vec = np.linalg.eig(L)
-    # eigen_vec = eigen_vec[:, np.argsort(eigen_val)]
-    # eigen_val = sorted(eigen_val.round(8))
 
     g = graphs.Graph(A)
     g.compute_fourier_basis()
@@ -79,12 +74,48 @@ def main():
     ax.stem(g.e, gft_sig, linefmt="--", basefmt="k-", label="correct")
     plt.show()
 
-    # $\hat{h}_\lambda$ に対応
-    # TODO: compute_clを用いて実装
     gft_sig[200:]=0
 
     plt.imshow(g.igft(gft_sig).reshape(int(np.sqrt(traindata[0].shape[0])), -1), cmap="gray")
     plt.show()
+
+
+def graph_filter(x, k, h, L, lmax):
+    tl_list = [x, L@x]
+    n_dim = len(x)
+    for i in range(2, k):
+        tl_list.append(
+            2*(L/lmax - np.eye(n_dim))@tl_list[i-1] - tl_list[i-2]
+        )
+
+    y = compute_cl(k, 0, lmax, h)/2
+
+    for i in range(1, k):
+        y += compute_cl(k, i, lmax, h)*tl_list[i]
+
+    return y
+
+def funch(lamda):
+    return 1 if lamda < 200 else 0
+
+def main():
+    traindata, *_ = load_mnist.mnist(dtype=np.int16)
+    # traindata, _ = load_mnist.digits()
+    # traindata = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9]])
+    A = adjacemcy_matrix(traindata[1])
+    D = degree_matrix(A)
+    L = D - A
+    lmax = np.linalg.eigvalsh(L)[-1]
+    print(lmax)
+
+    plt.imshow(traindata[1].reshape(int(np.sqrt(traindata[1].shape[0])), -1), cmap="gray")
+    plt.show()
+
+    for i in range(10, 50, 10):
+        y = graph_filter(traindata[1], i, funch, L, lmax)
+
+        plt.imshow(y.reshape(int(np.sqrt(traindata[1].shape[0])), -1), cmap="gray")
+        plt.show()
 
 if __name__=="__main__":
     main()
