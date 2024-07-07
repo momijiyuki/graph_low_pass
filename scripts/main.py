@@ -96,10 +96,11 @@ def graph_filter(x, k, h, L, lmax):
     return y
 
 def funch(lamda):
-    return 1 if lamda < 200 else 0
+    return 1 if lamda < 5 else 0
 
 def main():
     traindata, *_ = load_mnist.mnist(dtype=np.int16)
+    traindata = normalize(traindata)
     # traindata, _ = load_mnist.digits()
     # traindata = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9]])
     A = adjacemcy_matrix(traindata[1])
@@ -111,11 +112,13 @@ def main():
     plt.imshow(traindata[1].reshape(int(np.sqrt(traindata[1].shape[0])), -1), cmap="gray")
     plt.show()
 
-    for i in range(10, 50, 10):
-        y = graph_filter(traindata[1], i, funch, L, eig_vals[-1])
+    fig, ax = plt.subplots(1, 5)
+    for i, j in enumerate(range(10, 51, 10)):
+        y = graph_filter(traindata[1], j, funch, L, eig_vals[-1])
 
-        plt.imshow(y.reshape(int(np.sqrt(traindata[1].shape[0])), -1), cmap="gray")
-        plt.show()
+        ax[i].imshow(y.reshape(int(np.sqrt(traindata[1].shape[0])), -1), cmap="gray")
+    plt.axis("off")
+    plt.show()
 
 if __name__=="__main__":
     main()
