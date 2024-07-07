@@ -74,7 +74,9 @@ def filter_graph_domain():
     ax.stem(g.e, gft_sig, linefmt="--", basefmt="k-", label="correct")
     plt.show()
 
-    gft_sig[200:]=0
+    gft_sig = np.diag(
+        np.array([funch(i) for i in g.e])
+        )@gft_sig
 
     plt.imshow(g.igft(gft_sig).reshape(int(np.sqrt(traindata[0].shape[0])), -1), cmap="gray")
     plt.show()
@@ -121,4 +123,5 @@ def main():
     plt.show()
 
 if __name__=="__main__":
-    main()
+    # main()
+    filter_graph_domain()
