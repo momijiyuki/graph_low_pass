@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import japanize_matplotlib
 import numpy as np
 import warnings
 
@@ -57,18 +58,20 @@ class GraphLowPassFilter:
                 x: Vector,
                 filter: Callable[[float], float],
                 L: Matrix,
-                kmax: int = 100
+                kmax: int = 100,
+                threshold = 3
                 ) -> None:
         self._x = x
         self.filter = filter
         self._L = L
         self.lmax = np.linalg.eigvalsh(L)[-1]
         self._kmax = kmax
+        self._thred = threshold
         self._cl_list = self._compute_cl()
         self._tl_list = self._compute_tl()
         print(f"lambda max = {self.lmax}")
 
-    def apply_filter(self, x, k):
+    def apply_filter(self, k):
         y = 0
         for i in range(k):
             y += self._cl_list[i] * self._tl_list[i]
@@ -77,15 +80,16 @@ class GraphLowPassFilter:
     def filter_response(self, k):
         lamda = np.linspace(0, self.lmax, 100)
 
-        tl_list = [1, lamda]
+        tl_list = [1, 2*lamda/self.lmax-1]
         for i in range(2, self._kmax):
             tl_list.append(
                 2*(2*lamda/self.lmax - 1)*tl_list[i-1] - tl_list[i-2]
                 )
-        y = self._integrate_cl(0)/2
-        y = 0
+        # y = self._integrate_cl(0)/2
+        y = self._cl_list[0]
         for i in range(1, k):
-            y += self._integrate_cl(i) * tl_list[i]
+            y += self._cl_list[i] * tl_list[i]
+            # y += self._integrate_cl(i) * tl_list[i]
         return lamda, y
 
     def _compute_cl(self) -> dict[float]:
@@ -95,65 +99,81 @@ class GraphLowPassFilter:
             cl_list.append(self._integrate_cl(i))
         return cl_list
 
-    def _integrate_cl(self, l):
-
-        # def f(theta):
-        #     return np.cos(l*theta) * self.filter(
-        #         self.lmax/2 * (np.cos(theta + 1)))
-        # a = 0
-        # b = self.lmax
-        # n = 100
-        # h = (b-a)/n
-
-        # return h/2 * (f(a)+ f(b) + 2* np.sum([f(a+h*i) for i in range(1, n) ]))
-
-
-        k_s = self._kmax + 1
-        k_s = 10+1
+    def _integrate_cl(self, l, k = None):
+        if k is None:
+            k = self._kmax
+        k_s = k+1
         cl = 0
         for p in range(1, k_s):
             theta_p = (np.pi)/k_s * (p-0.5)
             cl += np.cos(l*theta_p) * self.filter(
-                self.lmax/2 * (np.cos(theta_p) + 1)
+                self.lmax/2 * (np.cos(theta_p) + 1), self._thred
                 )
         return 2/k_s * cl
 
     def _compute_tl(self):
         n_dim = len(self._x)
-        tl_list = [self._x, self._L @ self._x]
+        tl_list = [self._x, (2*self._L/self.lmax - np.eye(n_dim)) @ self._x]
         for i in range(2, self._kmax):
             tl_list.append(
-                2*(self._L/self.lmax - np.eye(n_dim))@tl_list[i-1] - tl_list[i-2]
+                2*(2*self._L/self.lmax - np.eye(n_dim))@tl_list[i-1] - tl_list[i-2]
                 )
         return tl_list
 
 
-def funch(lamda):
-    return 1 if lamda < 5 else 0
+def func_h(lamda, thred=3):
+    return 1 if lamda < thred else 0
+
+
+def draw_polynomial(graph:GraphLowPassFilter):
+    x = np.linspace(0, graph.lmax, 10000)
+    plt.plot(x, list(func_h(i, 3) for i in x), label="Original")
+    for i in range(5, 26, 5):
+        plt.plot(*graph.filter_response(i), label=f"k={i}")
+    plt.plot(*graph.filter_response(50), label=f"k={50}")
+    plt.legend()
+    plt.xlabel("$\lambda$")
+    plt.ylabel(r"$\hat{h}(\lambda)$")
+    plt.savefig("filter_response.pdf")
+    plt.close()
 
 
 def main():
     traindata, *_ = load_mnist.mnist(dtype=np.int16)
 
-    data = normalize(traindata[1])
+    data = normalize(traindata[123])
     A = adjacemcy_matrix(data)
     D = degree_matrix(A)
     L = D - A
-    graph_filter = GraphLowPassFilter(data, funch, L, kmax=50)
-    # fig, ax = plt.subplots(1, 5)
-    x = np.linspace(0, np.linalg.eigvalsh(L)[-1], 1000)
-    plt.plot(x, list(funch(i) for i in x), label="base filter")
-    for i, j in enumerate(range(10, 51, 10)):
 
-        res = graph_filter.apply_filter(data, j)
-        x, y = graph_filter.filter_response(j)
-        plt.plot(x, y, label=f"k={j}")
-        # ax[i].imshow(res.reshape(int(np.sqrt(data.shape[0])), -1), cmap="gray")
-    # plt.imshow(res.reshape(int(np.sqrt(data.shape[0])), -1), cmap="gray")
-    # plt.ylim(-1, 2)
-    # plt.axis("off")
-    plt.legend()
-    plt.show()
+    plt.imshow(data.reshape(int(np.sqrt(data.shape[0])), -1), cmap="gray")
+    plt.axis("off")
+    plt.savefig("base_image.pdf")
+    plt.close()
+
+    graph_filter = GraphLowPassFilter(data, func_h, L, kmax=50, threshold=3)
+    draw_polynomial(graph_filter)
+    fig, ax = plt.subplots(1, 5)
+    for i, j in enumerate(range(5, 26, 5)):
+        res = graph_filter.apply_filter(j)
+        ax[i].imshow(res.reshape(int(np.sqrt(data.shape[0])), -1), cmap="gray")
+        ax[i].axis("off")
+        ax[i].set_title(f"k={j}")
+    plt.tight_layout()
+    plt.savefig("output.pdf")
+    plt.close()
+
+
+    fig, ax = plt.subplots(1, 5)
+    for i in range(1, 6):
+        graph_filter = GraphLowPassFilter(data, func_h, L, kmax=20, threshold=i)
+        res = graph_filter.apply_filter(20)
+        ax[i-1].imshow(res.reshape(int(np.sqrt(data.shape[0])), -1), cmap="gray")
+        ax[i-1].axis("off")
+        ax[i-1].set_title(f"$\lambda={i}$")
+    plt.tight_layout()
+    plt.savefig("thershold.pdf")
+
 
 if __name__=="__main__":
     main()
