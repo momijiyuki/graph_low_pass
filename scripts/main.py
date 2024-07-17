@@ -33,7 +33,7 @@ def normalize(x:NDArray) -> NDArray:
     return x / 255
 
 
-def adjacemcy_matrix(x, width = None) -> Matrix:
+def adjacency_matrix(x, width = None) -> Matrix:
     length = len(x)
     if width is None:
         width = int(np.sqrt(length))
@@ -120,7 +120,7 @@ def filter_vertex_domain(x: Vector) -> None:
 
 
 def fillter_vertex_class(x: Vector) -> None:
-    A = adjacemcy_matrix(x)
+    A = adjacency_matrix(x)
     D = degree_matrix(A)
     L = D - A
     graph_filter = mygraph.GraphLowPassFilter(x, func_h, L, kmax=10, threshold=3)
