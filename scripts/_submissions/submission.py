@@ -78,7 +78,7 @@ def normalize(x:np.ndarray) -> np.ndarray:
     return x / 255
 
 
-def adjacemcy_matrix(x, width = None) -> np.ndarray:
+def adjacency_matrix(x, width = None) -> np.ndarray:
     length = len(x)
     if width is None:
         width = int(np.sqrt(length))
@@ -116,7 +116,7 @@ def save_images(eig_val):
 def main():
     traindata, *_ = mnist(dtype=np.int16)
     data = normalize(traindata[123])
-    A = adjacemcy_matrix(data)
+    A = adjacency_matrix(data)
 
     g = graphs.Graph(A)
     g.compute_fourier_basis()

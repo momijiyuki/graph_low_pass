@@ -27,7 +27,7 @@ def normalize(x:np.ndarray) -> np.ndarray:
     return x / 255
 
 
-def adjacemcy_matrix(x, width = None) -> np.ndarray:
+def adjacency_matrix(x, width = None) -> np.ndarray:
     length = len(x)
     if width is None:
         width = int(np.sqrt(length))
@@ -142,7 +142,7 @@ def main():
     traindata, *_ = load_mnist.mnist(dtype=np.int16)
 
     data = normalize(traindata[123])
-    A = adjacemcy_matrix(data)
+    A = adjacency_matrix(data)
     D = degree_matrix(A)
     L = D - A
 

@@ -89,7 +89,7 @@ def graph_filter(x, k, h, L, lmax) -> Vector:
 
 
 def filter_graph_domain(x: Vector) -> None:
-    A = adjacemcy_matrix(x)
+    A = adjacency_matrix(x)
     g = graphs.Graph(A)
     g.compute_fourier_basis()
     gft_sig = g.gft(x)
@@ -106,7 +106,7 @@ def filter_graph_domain(x: Vector) -> None:
 
 
 def filter_vertex_domain(x: Vector) -> None:
-    A = adjacemcy_matrix(x)
+    A = adjacency_matrix(x)
     D = degree_matrix(A)
     L = D - A
     lmax = np.linalg.eigvalsh(L)[-1]
